@@ -5,44 +5,40 @@ import android.database.DataSetObserver
 import android.util.AttributeSet
 import android.view.View
 import android.widget.BaseAdapter
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import tf.oof.com.service.engine.LoopTimer
 import tf.oof.com.service.engine.ScrollerPlus
 import java.util.*
 
-class SpialeLayout : RelativeLayout {
-    private var childHeight = 0
+class SpialeLayout : FrameLayout {
     var position = 0
         internal set
     private val scroller = object : ScrollerPlus(context) {
-                override fun onMoving(currX: Int, currY: Int) {
-                    scrollTo(currX, currY)
-                }
+        override fun onMoving(currX: Int, currY: Int) {
+            scrollTo(currX, currY)
+        }
 
-                override fun onFinish() {
-                    position++
-                    val recycle = findViewsByPosition(position - 1)
-                    if (recycle != null) {
-                        removeView(recycle)
-                    }
-                    addItemView(position + 1)
-                }
+        override fun onFinish() {
+            position++
+            val recycle = findViewsByPosition(position - 1)
+            if (recycle != null) {
+                removeView(recycle)
             }
+            addItemView(position + 1)
+        }
+    }
 
     private var delayMillis: Long = 4000
     private var unUsedViewPool: MutableList<View> = ArrayList()
     var adapter: BaseAdapter? = null
         set(value) {
             //处理原来的adapter
-            field?.let {
-                it.unregisterDataSetObserver(observer)
-            }
+            field?.unregisterDataSetObserver(observer)
             //赋予新的adapter
             field = value
-            field?.let {
-                it.registerDataSetObserver(observer)
-            }
+            field?.registerDataSetObserver(observer)
             reLayout()
         }
     private var observer = object : DataSetObserver() {
@@ -75,14 +71,10 @@ class SpialeLayout : RelativeLayout {
     }
 
     private fun reLayout() {
-        if (childHeight == 0) return
-        post {
-            //如果不使用post会导致，item的gravity属性在第一组控件中失效：具体原因不明。。。
-            recyclerAllViews()
-            addItemView(position)
-            addItemView(position + 1)
-            runningTimer.start()
-        }
+        recyclerAllViews()
+        addItemView(position)
+        addItemView(position + 1)
+        runningTimer.start()
     }
 
     private fun recyclerAllViews() {
@@ -104,14 +96,17 @@ class SpialeLayout : RelativeLayout {
 
     private fun addItemView(position: Int) {
         adapter?.let {
-            if(it.count == 0) return@addItemView
+            if (it.count == 0) return@addItemView
             val item: View
             if (unUsedViewPool.size > 0) {
                 item = it.getView(convertPosition(position), unUsedViewPool[0], this)
             } else {
                 item = it.getView(convertPosition(position), null, this)
                 if (item.layoutParams == null) {
-                    item.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT)
+                    item.layoutParams = FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+                }else{
+                    item.layoutParams.height = FrameLayout.LayoutParams.MATCH_PARENT
+                    item.layoutParams.width = FrameLayout.LayoutParams.MATCH_PARENT
                 }
             }
             item.setTag(TAG_KEY_POSITION, position)
@@ -127,13 +122,12 @@ class SpialeLayout : RelativeLayout {
     }
 
     private fun convertPosition(totalPosition: Int = position) = totalPosition % adapter!!.count
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        if (w != 0 && h != 0) {
-            childHeight = h
-            reLayout()
-        }
-        super.onSizeChanged(w, h, oldw, oldh)
-    }
+    /* override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+         if (w != 0 && h != 0) {
+             reLayout()
+         }
+         super.onSizeChanged(w, h, oldw, oldh)
+     }*/
 
     private val runningTimer = object : LoopTimer(delayMillis / 2, delayMillis) {
         override fun onTrick() {
@@ -143,7 +137,7 @@ class SpialeLayout : RelativeLayout {
 
 
     private fun scrollToNextPosition() {
-        scroller.startScroll(0, this.position * childHeight, 0, childHeight, delayMillis.toInt() / 2)
+        scroller.startScroll(0, this.position * height, 0, height, delayMillis.toInt() / 2)
     }
 
 
