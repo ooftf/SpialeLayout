@@ -16,7 +16,6 @@
         android:layout_height="56dp"
         android:background="#FFFFFF">
     </com.ooftf.spiale.SpialeLayout>
-
     <Button
         android:layout_marginTop="36dp"
         android:id="@+id/button"

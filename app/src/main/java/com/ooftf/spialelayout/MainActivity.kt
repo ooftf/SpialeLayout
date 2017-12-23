@@ -1,11 +1,7 @@
 package com.ooftf.spialelayout
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
-import android.view.View
-import android.view.ViewGroup
-import android.widget.BaseAdapter
+import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -15,15 +11,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         adapter = SpialeAdapter(this)
         spialeLayout.adapter  = adapter
-        adapter.list.add(Bean("第1条",""))
-        adapter.list.add(Bean("第3条",""))
-        adapter.list.add(Bean("第4条",""))
-        adapter.list.add(Bean("第5条",""))
-        adapter.list.add(Bean("第6条",""))
+        adapter.list.add(Bean("第1条","https://github.com/ooftf/SpialeLayout/raw/master/ImageRepository/logo_empty.png"))
+        adapter.list.add(Bean("第3条","https://github.com/ooftf/SpialeLayout/raw/master/ImageRepository/logo_full.png"))
+        adapter.list.add(Bean("第4条","https://github.com/ooftf/SpialeLayout/raw/master/ImageRepository/logo_legacy.png"))
+        adapter.list.add(Bean("第5条","https://github.com/ooftf/SpialeLayout/raw/master/ImageRepository/logo_orb.png"))
+        adapter.list.add(Bean("第6条","https://github.com/ooftf/SpialeLayout/raw/master/ImageRepository/s7.png"))
         adapter.notifyDataSetChanged()
-        Handler().postDelayed({
-
-        },2000)
-
+        button.setOnClickListener {
+            adapter.list.forEach {
+                it.text = it.text+"*"
+            }
+            adapter.notifyDataSetChanged()
+        }
     }
 }
