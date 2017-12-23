@@ -6,6 +6,7 @@
 * 现阶段Adapter只支持Item存在一种样式 所以getItemViewType方法无效
 * OnItemClickListener第三个参数itemData 是从adapter.getItem()中获取的
 # 效果图
+![](https://github.com/ooftf/SpialeLayout/raw/master/ImageRepository/SpialeLayout.gif)
 # Gradle配置
 ```groovy
 allprojects {
