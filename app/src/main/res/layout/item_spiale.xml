@@ -6,6 +6,7 @@
     android:orientation="horizontal">
 
     <TextView
+        android:paddingLeft="16dp"
         android:id="@+id/textView"
         android:layout_width="0dp"
         android:layout_height="match_parent"

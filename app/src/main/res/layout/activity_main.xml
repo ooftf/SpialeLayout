@@ -10,6 +10,8 @@
 
 
     <com.ooftf.spiale.SpialeLayout
+        app:scrollMillis="1000"
+        app:showMillis="3000"
         android:layout_marginTop="36dp"
         android:id="@+id/spialeLayout"
         android:layout_width="match_parent"
@@ -17,6 +19,7 @@
         android:background="#FFFFFF">
     </com.ooftf.spiale.SpialeLayout>
     <Button
+        android:text="修改数据：添加*"
         android:layout_marginTop="36dp"
         android:id="@+id/button"
         android:layout_width="match_parent"

@@ -1,2 +1,7 @@
 # SpialeLayout
 自动竖向滚动的控件，可自定义Item样式
+# 注意事项
+* 由于OnItemClickListener点击事件是通过在item添加点击事件实现的，
+所以如果在Adapter getView根节点添加点击事件会导致和OnItemClickListener冲突
+* 现阶段Adapter只支持Item存在一种样式 所以getItemViewType方法无效
+* OnItemClickListener第三个参数itemData 是从adapter.getItem()中获取的
