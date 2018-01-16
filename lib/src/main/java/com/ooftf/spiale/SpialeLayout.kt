@@ -6,8 +6,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.BaseAdapter
 import android.widget.FrameLayout
-import tf.oof.com.service.engine.LoopTimer
-import tf.oof.com.service.engine.ScrollerPlus
 import java.util.*
 
 class SpialeLayout : FrameLayout {
