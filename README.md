@@ -15,7 +15,7 @@ allprojects {
     }
 }
 dependencies {
-    compile 'com.github.ooftf:SpialeLayout:1.0.0'
+    compile 'com.github.ooftf:SpialeLayout:1.0.1'
 }
 ```
 # 使用方式
