@@ -6,13 +6,32 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.BaseAdapter
 import android.widget.FrameLayout
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import java.util.*
+import java.util.concurrent.TimeUnit
 
+/**
+ * 自动滚动布局
+ */
 class SpialeLayout : FrameLayout {
+    /**
+     * 记录位置
+     */
     var position = 0
         internal set
+    /**
+     * 用于做滚动动画
+     */
     private val scroller = InnerScrollerPlus()
+    /**
+     * view回收池,用于复用
+     */
     private var unUsedViewPool: MutableList<View> = ArrayList()
+    /**
+     * 适配器
+     */
     var adapter: BaseAdapter? = null
         set(value) {
             //处理原来的adapter
@@ -22,12 +41,34 @@ class SpialeLayout : FrameLayout {
             field?.registerDataSetObserver(observer)
             reLayoutItem()
         }
-    private val runningTimer: InnerLoopTimer by lazy {
-        InnerLoopTimer()
+    /**
+     * 用于取消翻页
+     */
+    var disposable: Disposable? = null
+    /**
+     * 翻页定时器
+     */
+    private val observable: Observable<Long> by lazy {
+        Observable
+                .interval(showMillis.toLong(), showMillis + scrollMillis.toLong(), TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
     }
+    /**
+     * 监听 adapter事件
+     */
     private var observer = InnerDataSetObserver()
+    /**
+     * 点击事件
+     */
     private var listener: ((position: Int, itemView: View, itemData: Any) -> Unit)? = null
-
+    /**
+     * 滚动时间
+     */
+    var scrollMillis: Int = 1000
+    /**
+     * 停留时间
+     */
+    var showMillis: Int = 2000
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         obtainAttrs(attrs)
@@ -37,12 +78,11 @@ class SpialeLayout : FrameLayout {
         obtainAttrs(attrs)
     }
 
-    var scrollMillis: Int = 2000
-    var showMillis: Int = 2000
+
     private fun obtainAttrs(attrs: AttributeSet) {
         val attributes = context.obtainStyledAttributes(attrs, R.styleable.SpialeLayout)
-        scrollMillis = attributes.getInteger(R.styleable.SpialeLayout_scrollMillis, 2000)
-        showMillis = attributes.getInteger(R.styleable.SpialeLayout_showMillis, 2000)
+        scrollMillis = attributes.getInteger(R.styleable.SpialeLayout_scrollMillis, scrollMillis)
+        showMillis = attributes.getInteger(R.styleable.SpialeLayout_showMillis, showMillis)
     }
 
     fun setOnItemClickListener(listener: (position: Int, itemView: View, itemData: Any) -> Unit) {
@@ -52,8 +92,26 @@ class SpialeLayout : FrameLayout {
     override fun onAttachedToWindow() {
         super.onAttachedToWindow()
         when (layoutParams.height) {
-            LayoutParams.WRAP_CONTENT -> throw IllegalAccessException("VerticalRunningLayout layout_height必须是固定高度")
+            LayoutParams.WRAP_CONTENT -> throw IllegalAccessException("SpialeLayout layout_height必须是固定高度")
         }
+        disposable?.dispose()
+        observable.subscribe(object : EmptyObserver<Long>() {
+            override fun onSubscribe(d: Disposable) {
+                disposable = d
+            }
+
+            override fun onNext(t: Long) {
+                if (adapter != null && visibility == View.VISIBLE) {
+                    scrollToNextPosition()
+                }
+            }
+        })
+    }
+
+    override fun onDetachedFromWindow() {
+        disposable?.dispose()
+        scroller.cancel()
+        super.onDetachedFromWindow()
     }
 
     /**
@@ -63,7 +121,6 @@ class SpialeLayout : FrameLayout {
         recyclerAllViews()
         addItemView(position)
         addItemView(position + 1)
-        runningTimer.start()
     }
 
     private fun recyclerAllViews() {
@@ -138,25 +195,8 @@ class SpialeLayout : FrameLayout {
         }
     }
 
-    override fun onDetachedFromWindow() {
-        runningTimer.cancel()
-        scroller.cancel()
-        super.onDetachedFromWindow()
-    }
-
-    override fun onWindowVisibilityChanged(visibility: Int) {
-        super.onWindowVisibilityChanged(visibility)
-        if (visibility == View.VISIBLE) {
-            if (adapter != null) {
-                runningTimer.start()
-            }
-        } else {
-            runningTimer.cancel()
-        }
-    }
-
     companion object {
-        private val TAG_KEY_POSITION = R.integer.tag_key_position//随便一个id，因为tag 的key必须为id
+        private val TAG_KEY_POSITION = R.id.tag_key_position//随便一个id，因为tag 的key必须为id
     }
 
     /**
@@ -168,6 +208,14 @@ class SpialeLayout : FrameLayout {
         }
 
         override fun onFinish() {
+            animFinish()
+        }
+
+        override fun onCancel() {
+            animFinish()
+        }
+
+        private fun animFinish() {
             position++
             val recycle = findViewsByPosition(position - 1)
             if (recycle != null) {
@@ -184,15 +232,6 @@ class SpialeLayout : FrameLayout {
 
         override fun onInvalidated() {
             reLayoutItem()
-        }
-    }
-
-    /**
-     * 用于控件不断的滚动
-     */
-    inner class InnerLoopTimer : LoopTimer(showMillis.toLong(), showMillis + scrollMillis.toLong()) {
-        override fun onTrick() {
-            scrollToNextPosition()
         }
     }
 }

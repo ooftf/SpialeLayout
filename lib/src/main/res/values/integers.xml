@@ -1,2 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources><integer name="tag_key_position">15</integer></resources>
+<resources>
+    <item type="id" name="tag_key_position"/>
+</resources>

@@ -1,8 +1,17 @@
 package com.ooftf.spiale
 
 import android.content.Context
+import android.util.Log
 import android.view.animation.Interpolator
 import android.widget.Scroller
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.Scheduler
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+import java.util.concurrent.TimeUnit
+
 
 /**
  * Created by master on 2017/10/18 0018.
@@ -12,18 +21,8 @@ abstract class ScrollerPlus : Scroller {
     constructor(context: Context?, interpolator: Interpolator?) : super(context, interpolator)
     constructor(context: Context?, interpolator: Interpolator?, flywheel: Boolean) : super(context, interpolator, flywheel)
 
-    private val loopTimer: LoopTimer by lazy {
-        object : LoopTimer(period = 1000 / 100.toLong()) {
-            override fun onTrick() {
-                if (computeScrollOffset()) {
-                    onMoving(currX, currY)
-                } else {
-                    loopTimer.cancel()
-                    onFinish()
-                }
-            }
-        }
-    }
+    var disposable: Disposable? = null
+    var isScrolling = false
 
     abstract fun onMoving(currX: Int, currY: Int)
 
@@ -38,10 +37,43 @@ abstract class ScrollerPlus : Scroller {
      */
     override fun startScroll(startX: Int, startY: Int, dx: Int, dy: Int, duration: Int) {
         super.startScroll(startX, startY, dx, dy, duration)
-        loopTimer.start()
+        disposable?.dispose()
+        Observable
+                .intervalRange(0, (duration / 10f).toLong(), 0, 1000 / 100, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(object : Observer<Long> {
+                    override fun onComplete() {
+                        isScrolling = false
+                        onFinish()
+                    }
+
+                    override fun onSubscribe(d: Disposable) {
+                        isScrolling = true
+                        disposable = d
+                    }
+
+                    override fun onNext(t: Long) {
+                        computeScrollOffset();
+                        onMoving(currX, currY)
+                    }
+
+                    override fun onError(e: Throwable) {
+                        isScrolling = false
+                        Log.e("ScrollerPlus", e.toString())
+                    }
+
+                })
     }
 
     fun cancel() {
-        loopTimer.cancel()
+        if (isScrolling) {
+            onCancel()
+            isScrolling = false
+        }
+        disposable?.dispose()
+    }
+
+    open fun onCancel() {
+
     }
 }
