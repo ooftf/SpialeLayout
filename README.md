@@ -15,7 +15,7 @@ allprojects {
     }
 }
 dependencies {
-    compile 'com.github.ooftf:SpialeLayout:1.0.1'
+    compile 'com.github.ooftf:SpialeLayout:1.1.0'
 }
 ```
 # 使用方式
@@ -41,7 +41,7 @@ dependencies {
 # XML属性
 |属性名|描述|默认值|
 |---|---|---|
-|scrollMillis|滚动动画时间（毫秒）|2000|
+|scrollMillis|滚动动画时间（毫秒）|1000|
 |showMillis|停止展示时间（毫秒）|2000|
 # SpialeLayout方法
 |方法名|描述|
