@@ -69,6 +69,7 @@ class SpialeLayout : FrameLayout {
      * 停留时间
      */
     var showMillis: Int = 2000
+
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet) : super(context, attrs) {
         obtainAttrs(attrs)
@@ -94,15 +95,15 @@ class SpialeLayout : FrameLayout {
         when (layoutParams.height) {
             LayoutParams.WRAP_CONTENT -> throw IllegalAccessException("SpialeLayout layout_height必须是固定高度")
         }
-        disposable?.dispose()
         observable.subscribe(object : EmptyObserver<Long>() {
             override fun onSubscribe(d: Disposable) {
+                disposable?.dispose()
                 disposable = d
             }
 
             override fun onNext(t: Long) {
                 if (adapter != null && visibility == View.VISIBLE) {
-                    scrollToNextPosition()
+                    smoothToNextPosition()
                 }
             }
         })
@@ -133,6 +134,13 @@ class SpialeLayout : FrameLayout {
     override fun removeView(view: View) {
         super.removeView(view)
         unUsedViewPool.add(view)
+    }
+
+    fun removeView(position: Int) {
+        val recycle = findViewsByPosition(position)
+        if (recycle != null) {
+            removeView(recycle)
+        }
     }
 
     override fun addView(child: View) {
@@ -170,10 +178,14 @@ class SpialeLayout : FrameLayout {
 
     private fun convertPosition(totalPosition: Int = position) = totalPosition % adapter!!.count
 
-    private fun scrollToNextPosition() {
+    private fun smoothToNextPosition() {
         scroller.startScroll(0, this.position * height, 0, height, scrollMillis)
     }
 
+    private fun scrollToPosition(position: Int) {
+        this.position = position;
+        scrollTo(0, position * height)
+    }
 
     private fun findViewsByPosition(position: Int): View? {
         for (i in 0 until childCount) {
@@ -216,11 +228,8 @@ class SpialeLayout : FrameLayout {
         }
 
         private fun animFinish() {
-            position++
-            val recycle = findViewsByPosition(position - 1)
-            if (recycle != null) {
-                removeView(recycle)
-            }
+            scrollToPosition(position + 1)
+            removeView(position - 1)
             addItemView(position + 1)
         }
     }
