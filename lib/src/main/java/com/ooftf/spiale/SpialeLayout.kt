@@ -21,14 +21,17 @@ class SpialeLayout : FrameLayout {
      */
     var position = 0
         internal set
+
     /**
      * 用于做滚动动画
      */
     private val scroller = InnerScrollerPlus()
+
     /**
      * view回收池,用于复用
      */
     private var unUsedViewPool: MutableList<View> = ArrayList()
+
     /**
      * 适配器
      */
@@ -41,10 +44,12 @@ class SpialeLayout : FrameLayout {
             field?.registerDataSetObserver(observer)
             reLayoutItem()
         }
+
     /**
      * 用于取消翻页
      */
     var disposable: Disposable? = null
+
     /**
      * 翻页定时器
      */
@@ -53,18 +58,22 @@ class SpialeLayout : FrameLayout {
                 .interval(showMillis.toLong(), showMillis + scrollMillis.toLong(), TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
     }
+
     /**
      * 监听 adapter事件
      */
     private var observer = InnerDataSetObserver()
+
     /**
      * 点击事件
      */
     private var listener: ((position: Int, itemView: View, itemData: Any) -> Unit)? = null
+
     /**
      * 滚动时间
      */
     var scrollMillis: Int = 1000
+
     /**
      * 停留时间
      */
@@ -95,6 +104,16 @@ class SpialeLayout : FrameLayout {
         when (layoutParams.height) {
             LayoutParams.WRAP_CONTENT -> throw IllegalAccessException("SpialeLayout layout_height必须是固定高度")
         }
+        startScroll()
+    }
+
+    fun startScroll() {
+        if (!scroll) {
+            return
+        }
+        if (disposable != null && !disposable!!.isDisposed) {
+            return
+        }
         observable.subscribe(object : EmptyObserver<Long>() {
             override fun onSubscribe(d: Disposable) {
                 disposable?.dispose()
@@ -109,9 +128,13 @@ class SpialeLayout : FrameLayout {
         })
     }
 
-    override fun onDetachedFromWindow() {
+    fun stopScroll() {
         disposable?.dispose()
         scroller.cancel()
+    }
+
+    override fun onDetachedFromWindow() {
+        stopScroll()
         super.onDetachedFromWindow()
     }
 
@@ -146,6 +169,17 @@ class SpialeLayout : FrameLayout {
     override fun addView(child: View) {
         unUsedViewPool.remove(child)
         super.addView(child)
+    }
+
+    var scroll = true
+    fun stop() {
+        scroll = false
+        stopScroll()
+    }
+
+    fun start() {
+        scroll = true
+        startScroll()
     }
 
     /**
@@ -236,10 +270,24 @@ class SpialeLayout : FrameLayout {
 
     inner class InnerDataSetObserver : DataSetObserver() {
         override fun onChanged() {
+            adapter?.let {
+                if (it.count <= 1) {
+                    stop()
+                } else {
+                    start()
+                }
+            }
             reLayoutItem()
         }
 
         override fun onInvalidated() {
+            adapter?.let {
+                if (it.count <= 1) {
+                    stop()
+                } else {
+                    start()
+                }
+            }
             reLayoutItem()
         }
     }
