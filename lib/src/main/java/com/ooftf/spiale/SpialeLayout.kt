@@ -42,6 +42,13 @@ class SpialeLayout : FrameLayout {
             //赋予新的adapter
             field = value
             field?.registerDataSetObserver(observer)
+            field?.let {
+                if (it.count <= 1) {
+                    stop()
+                } else {
+                    start()
+                }
+            }
             reLayoutItem()
         }
 
